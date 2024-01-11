@@ -1,20 +1,20 @@
 <template>
 	<el-card>
 		<el-form :inline="true" :model="state.queryForm" @keyup.enter="getDataList()">
-					<el-form-item>
-			  <el-input v-model="state.queryForm.telephone" placeholder="联系电话"></el-input>
+			<el-form-item>
+				<el-input v-model="state.queryForm.telephone" placeholder="联系电话"></el-input>
 			</el-form-item>
 			<el-form-item>
-			  <el-input v-model="state.queryForm.email" placeholder="邮箱"></el-input>
+				<el-input v-model="state.queryForm.email" placeholder="邮箱"></el-input>
 			</el-form-item>
 			<el-form-item>
-			  <el-input v-model="state.queryForm.serviceTypeName" placeholder="预约服务类型名称"></el-input>
+				<el-input v-model="state.queryForm.serviceTypeName" placeholder="预约服务类型名称"></el-input>
 			</el-form-item>
 			<el-form-item>
-			  <el-input v-model="state.queryForm.caseDate" placeholder="案件日期"></el-input>
+				<el-input v-model="state.queryForm.caseDate" placeholder="案件日期"></el-input>
 			</el-form-item>
 			<el-form-item>
-			  <el-input v-model="state.queryForm.state" placeholder="状态"></el-input>
+				<el-input v-model="state.queryForm.state" placeholder="状态"></el-input>
 			</el-form-item>
 			<el-form-item>
 				<el-button @click="getDataList()">查询</el-button>
@@ -68,16 +68,15 @@
 </template>
 
 <script setup lang="ts" name="MakuAppointment_record_infoIndex">
-	import {useCrud} from '@/hooks'
-	import {reactive, ref} from 'vue'
-	import {IHooksOptions} from '@/hooks/interface'
-	import AddOrUpdate from './add-or-update.vue'
+import { useCrud } from '@/hooks'
+import { reactive, ref } from 'vue'
+import { IHooksOptions } from '@/hooks/interface'
+import AddOrUpdate from './add-or-update.vue'
 
-	const state: IHooksOptions = reactive({
+const state: IHooksOptions = reactive({
 	dataListUrl: '/sys/appointment_record_info/page',
 	deleteUrl: '/sys/appointment_record_info',
-	queryForm: {
-	}
+	queryForm: {}
 })
 
 const addOrUpdateRef = ref()
