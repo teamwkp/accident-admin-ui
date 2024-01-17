@@ -69,7 +69,7 @@
 			>
 			</el-pagination>
 		</div>
-		<calendar-view v-if="listType === 2"></calendar-view>
+		<calendar-view v-if="listType === 2" :view-data="viewData"></calendar-view>
 		<!-- 弹窗, 新增 / 修改 -->
 		<add-or-update ref="addOrUpdateRef" @refreshDataList="getDataList"></add-or-update>
 	</el-card>
@@ -77,16 +77,31 @@
 
 <script setup lang="ts" name="MakuAppointment_record_infoIndex">
 import { useCrud } from '@/hooks'
-import { reactive, ref } from 'vue'
+import { reactive, ref, toRaw, watch } from 'vue'
 import { IHooksOptions } from '@/hooks/interface'
 import AddOrUpdate from './add-or-update.vue'
 import CalendarView from './CalendarView.vue'
+const viewData: any = ref([])
 const state: IHooksOptions = reactive({
 	dataListUrl: '/sys/appointment_record_info/page',
 	deleteUrl: '/sys/appointment_record_info',
 	queryForm: {}
 })
+const stateList = ['未完成', '已完成', '取消']
 const listType = ref(1)
+watch(listType, val => {
+	if (val === 2) {
+		viewData.value = toRaw(state.dataList)?.map(item => {
+			return {
+				...item,
+				title: item.describeInfo,
+				start: '2024-01-06T10:30:00',
+				end: '2024-01-06T12:30:00',
+				stateName: stateList[item.state]
+			}
+		})
+	}
+})
 const addOrUpdateRef = ref()
 const addOrUpdateHandle = (id?: number) => {
 	addOrUpdateRef.value.init(id)
