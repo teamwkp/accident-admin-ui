@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useAppointment_record_infoSubmitApi } from '@/api/sys/appointment_record_info'
 const emits = defineEmits(['close'])
 const props = defineProps({
 	detailInfo: {
@@ -9,9 +11,23 @@ const props = defineProps({
 		}
 	}
 })
-const detail = ref(props.detailInfo.event.extendedProps)
+const detail = ref(JSON.parse(JSON.stringify(props.detailInfo.event.extendedProps)))
 const close = () => {
 	emits('close')
+}
+const changeState = async (state: any) => {
+	try {
+		await useAppointment_record_infoSubmitApi({
+			id: props.detailInfo.event.id,
+			state
+		})
+		ElMessage({
+			type: 'success',
+			message: '修改成功'
+		})
+	} catch (err) {
+		console.log(err)
+	}
 }
 </script>
 <template>
@@ -30,10 +46,10 @@ const close = () => {
 				<li>
 					<div>订单状态</div>
 					<div>
-						<el-radio-group v-model="detail.state" size="small">
-							<el-radio-button :label="0" :disabled="detail.state !== 0">未开始</el-radio-button>
-							<el-radio-button :label="1" :disabled="detail.state !== 1">已完成</el-radio-button>
-							<el-radio-button :label="2" :disabled="detail.state !== 2">取消</el-radio-button>
+						<el-radio-group v-model="detail.state" size="small" @change="changeState">
+							<el-radio-button :label="0">未开始</el-radio-button>
+							<el-radio-button :label="1">已完成</el-radio-button>
+							<el-radio-button :label="2">取消</el-radio-button>
 						</el-radio-group>
 					</div>
 				</li>

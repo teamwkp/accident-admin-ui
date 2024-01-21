@@ -11,3 +11,7 @@ export const useAppointment_record_infoSubmitApi = (dataForm: any) => {
 		return service.post('/sys/appointment_record_info', dataForm)
 	}
 }
+
+export const useService_type_infoApi = () => {
+	return service.get('/sys/service_type_info/list')
+}

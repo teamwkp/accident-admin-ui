@@ -5,6 +5,7 @@ import zhLocale from '@fullcalendar/core/locales/zh-cn'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import ViewDetail from './detail.vue'
+import { stateList, getTimeTag } from './data.js'
 export default defineComponent({
 	components: {
 		FullCalendar,
@@ -22,20 +23,8 @@ export default defineComponent({
 		return {
 			drawerDetail: false,
 			detailInfo: {},
-			stateList: [
-				{
-					value: 0,
-					label: '未开始'
-				},
-				{
-					value: 1,
-					label: '已完成'
-				},
-				{
-					value: 2,
-					label: '取消'
-				}
-			],
+			stateList,
+			getTimeTag,
 			calendarOptions: {
 				locale: zhLocale,
 				plugins: [dayGridPlugin, timeGridPlugin],
@@ -56,28 +45,41 @@ export default defineComponent({
 				select: this.handleDateSelect, // 点击日期格子
 				eventClick: this.handleEventClick, // 点击当前信息
 				eventsSet: this.handleEvents,
-				eventResize: view => {
-					console.log(view.type)
-				}
+				eventResize: view => {}
 			}
 		}
 	},
+	mounted() {
+		this.calendarApi = this.$refs.FullCalendar.getApi()
+		// this.calendarApi.gotoDate('2024-02') 跳转到某一时间点
+		this.$nextTick(() => {
+			const prevBtn = document.querySelector('.fc-prev-button')
+			prevBtn.addEventListener('click', () => {
+				console.log('向上')
+			})
+			const nextBtn = document.querySelector('.fc-next-button')
+			nextBtn.addEventListener('click', () => {
+				console.log('向下')
+			})
+			const todayBtn = document.querySelector('.fc-today-button')
+			todayBtn.addEventListener('click', () => {
+				console.log('今天')
+			})
+		})
+	},
 	methods: {
-		handleDateSelect(item) {
-			console.log(1, item)
-		},
+		handleDateSelect(item) {},
 		handleEventClick(item) {
-			console.log(2, item)
-		},
-		handleEvents(item) {
-			console.log(3, item)
+			if (item.view.type == 'timeGridWeek') {
+				this.showDetail(item)
+			}
 		},
 		showDetail(item) {
 			this.drawerDetail = true
 			this.detailInfo = item
 		},
-		handleDateChange() {
-			console.log(323)
+		changeState(value) {
+			console.log(value)
 		}
 	}
 })
@@ -92,14 +94,17 @@ export default defineComponent({
 			<view-detail :detail-info="detailInfo" @close="drawerDetail = false"></view-detail>
 		</el-drawer>
 		<div class="demo-app-main">
-			<FullCalendar ref="FullCalendar" :options="calendarOptions" @dateClick="handleDateChange">
+			<FullCalendar ref="FullCalendar" :options="calendarOptions" @date-click="handleDateChange">
 				<template #eventContent="arg">
-					<div v-show="arg.view.type == 'dayGridMonth'" class="month-list complete">
+					<div
+						v-show="arg.view.type == 'dayGridMonth'"
+						:class="['month-list', { complete: arg.event.extendedProps.state == 1, cancel: arg.event.extendedProps.state == 2 }]"
+					>
 						<el-popover placement="right" :width="400" trigger="hover">
 							<template #reference>
 								<div>
-									早上 {{ arg.timeText }}
-									<span style="padding-left: 15px">{{ arg.event.extendedProps.surname }}{{ arg.event.extendedProps.firstName }}</span>
+									{{ getTimeTag(arg.event.extendedProps.consultTime) }} {{ arg.event.extendedProps.consultTime.split('-')[0] }}
+									<span style="padding-left: 15px"> {{ arg.event.extendedProps.surname }}{{ arg.event.extendedProps.firstName }}</span>
 								</div>
 							</template>
 							<ul class="view-ul">
@@ -110,15 +115,15 @@ export default defineComponent({
 								</li>
 								<li>
 									<div>订单日期</div>
-									<div>早上 {{ arg.event.extendedProps.createDate }}</div>
+									<div>{{ arg.event.extendedProps.createDate }}</div>
 								</li>
 								<li>
 									<div>状态</div>
 									<div style="margin-top: 3px">
 										<el-radio-group v-model="arg.event.extendedProps.state" size="small">
-											<el-radio-button :label="0">未开始</el-radio-button>
-											<el-radio-button :label="1">已完成</el-radio-button>
-											<el-radio-button :label="2">取消</el-radio-button>
+											<el-radio-button :label="0" :disabled="arg.event.extendedProps.state !== 0">未开始</el-radio-button>
+											<el-radio-button :label="1" :disabled="arg.event.extendedProps.state !== 1">已完成</el-radio-button>
+											<el-radio-button :label="2" :disabled="arg.event.extendedProps.state !== 2">取消</el-radio-button>
 										</el-radio-group>
 									</div>
 								</li>
@@ -132,7 +137,7 @@ export default defineComponent({
 								</li>
 								<li>
 									<div>预约时间</div>
-									<div>{{ arg.event.extendedProps.consultDate }}{{ arg.event.extendedProps.consultTime }}</div>
+									<div>{{ arg.event.extendedProps.consultDate }} {{ arg.event.extendedProps.consultTime }}</div>
 								</li>
 								<li>
 									<div>案件日期</div>
@@ -149,12 +154,12 @@ export default defineComponent({
 						</el-popover>
 					</div>
 					<div v-show="arg.view.type == 'timeGridWeek'">
-						<ul>
+						<ul :class="['noComplete', { complete: arg.event.extendedProps.state == 1, cancel: arg.event.extendedProps.state == 2 }]">
 							<li>{{ arg.event.extendedProps.surname }}{{ arg.event.extendedProps.firstName }}</li>
 							<li>#{{ arg.event.extendedProps.appointmentCode }}</li>
-							<li>{{ arg.event.extendedProps.consultTime }}</li>
+							<li>{{ getTimeTag(arg.event.extendedProps.consultTime) }} {{ arg.event.extendedProps.consultTime }}</li>
 							<li>{{ arg.event.extendedProps.serviceTypeName }}</li>
-							<li>{{ arg.event.extendedProps.stateName }}</li>
+							<li>{{ stateList.find(item => item.value == arg.event.extendedProps.state).label }}</li>
 						</ul>
 					</div>
 				</template>
@@ -182,8 +187,12 @@ export default defineComponent({
 	background-color: #3788d8;
 	border-radius: 4px;
 }
+.noComplete {
+	background-color: #3788d8;
+}
 .cancel {
 	text-decoration: line-through;
+	background-color: #999;
 }
 .complete {
 	background-color: #67c23a;
@@ -197,6 +206,10 @@ export default defineComponent({
 		color: #999;
 	}
 }
+.fc-v-event {
+	background-color: transparent;
+	border: none;
+}
 h2 {
 	margin: 0;
 	font-size: 16px;
@@ -208,7 +221,7 @@ ul {
 }
 
 li {
-	padding: 0;
+	padding: 0 0 0 5px;
 	list-style: none;
 	font-size: 12px;
 	line-height: 22px;

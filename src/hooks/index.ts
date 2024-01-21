@@ -46,9 +46,14 @@ export const useCrud = (options: IHooksOptions) => {
 		if (!state.dataListUrl) {
 			return
 		}
-
 		state.dataListLoading = true
-
+		if (state.queryForm.caseRangeDate) {
+			state.queryForm.startTime = new Date(state.queryForm.caseRangeDate[0]).getTime()
+			state.queryForm.endTime = new Date(state.queryForm.caseRangeDate[1]).getTime()
+		} else {
+			state.queryForm.startTime = new Date('1990-01-01 00:00:00').getTime()
+			state.queryForm.endTime = new Date('2999-01-01 00:00:00').getTime()
+		}
 		service
 			.get(state.dataListUrl, {
 				params: {
