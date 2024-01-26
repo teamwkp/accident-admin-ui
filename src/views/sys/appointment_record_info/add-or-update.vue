@@ -212,6 +212,14 @@ const submitHandle = () => {
 		if (!valid) {
 			return false
 		}
+		console.log(dataForm.consultTime)
+		if (dataForm.consultTime.length > 1 && dataForm.consultTime[0].split('-')[1].trim() !== dataForm.consultTime[1].split('-')[0].trim()) {
+			ElMessage({
+				message: '所选咨询时间段必须连续',
+				type: 'warning'
+			})
+			return
+		}
 		dataForm.serviceTypeName = props.serviceTypeList.find((item: any) => item.value == dataForm.serviceTypeId)?.label
 		useAppointment_record_infoSubmitApi({ ...dataForm, consultTime: dataForm.consultTime.join(',') }).then(() => {
 			ElMessage.success({
