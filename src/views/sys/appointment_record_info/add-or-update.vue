@@ -20,7 +20,7 @@
 				<el-input v-model="dataForm.email" placeholder="邮箱"></el-input>
 			</el-form-item>
 			<el-form-item label="预约服务类型" prop="serviceTypeId">
-				<el-select v-model="dataForm.serviceTypeId" placeholder="请选择服务类型" style="width: 100%">
+				<el-select v-model="dataForm.serviceTypeId" placeholder="请选择服务类型" style="width: 100%" @change="changeServiceType">
 					<el-option v-for="service in serviceTypeList" :key="service.value" :label="service.label" :value="service.value" />
 				</el-select>
 			</el-form-item>
@@ -45,25 +45,9 @@
 				/>
 			</el-form-item>
 			<el-form-item label="咨询时间段" prop="consultTime">
-				<el-time-select
-					v-model="dataForm.startTime"
-					:max-time="dataForm.endTime"
-					placeholder="开始时间"
-					start="00:00"
-					step="00:30"
-					end="22:00"
-					style="width: 150px"
-				/>
-				<span style="padding: 0 8px">至</span>
-				<el-time-select
-					v-model="dataForm.endTime"
-					:min-time="dataForm.startTime"
-					placeholder="结束时间"
-					start="02:00"
-					step="00:30"
-					end="23:00"
-					style="width: 150px"
-				/>
+				<el-select v-model="dataForm.consultTime" multiple :multiple-limit="2" placeholder="请选择时间段" style="width: 100%">
+					<el-option v-for="consult in consultTimeList" :key="consult.value" :label="consult.label" :value="consult.value" />
+				</el-select>
 			</el-form-item>
 			<el-form-item label="案件描述" prop="describeInfo">
 				<el-input v-model="dataForm.describeInfo" placeholder="案件描述"></el-input>
@@ -91,9 +75,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, computed, watchEffect } from 'vue'
+import { reactive, ref, onMounted, computed, watchEffect, watch } from 'vue'
 import { ElMessage } from 'element-plus/es'
-import { useAppointment_record_infoApi, useAppointment_record_infoSubmitApi } from '@/api/sys/appointment_record_info'
+import { useAppointment_record_infoApi, useAppointment_record_infoSubmitApi, queryAvailablePeriods } from '@/api/sys/appointment_record_info'
 const emit = defineEmits(['update:modelValue', 'refreshDataList'])
 const props = defineProps({
 	modelValue: {
@@ -131,6 +115,7 @@ const stateList = [
 		value: 2
 	}
 ]
+const consultTimeList = ref([])
 const dataFormRef = ref()
 
 onMounted(async () => {
@@ -148,8 +133,6 @@ const dataForm = reactive({
 	serviceTypeName: '',
 	caseDate: '',
 	consultTime: '',
-	startTime: '',
-	endTime: '',
 	consultDate: '',
 	describeInfo: '',
 	state: ''
@@ -157,13 +140,34 @@ const dataForm = reactive({
 	// createDate: '',
 	// createUser: ''
 })
-watchEffect(() => {
-	if (dataForm.startTime && dataForm.endTime) {
-		dataForm.consultTime = `${dataForm.startTime}-${dataForm.endTime}`
-	} else {
-		dataForm.consultTime = ''
+
+// 监听服务类型以及咨询日期变化
+watch(
+	() => dataForm.serviceTypeId,
+	async () => {
+		if (dataForm.consultDate) {
+			getConsultTime()
+		}
 	}
-})
+)
+watch(
+	() => dataForm.consultDate,
+	async () => {
+		if (dataForm.serviceTypeId) {
+			getConsultTime()
+		}
+	}
+)
+const getConsultTime = async () => {
+	const { data } = await queryAvailablePeriods()
+	consultTimeList.value = data.map((item: any) => {
+		return {
+			label: item.times,
+			value: item.times
+		}
+	})
+}
+
 const init = (id?: number) => {
 	dataForm.id = ''
 	// 重置表单数据
@@ -178,8 +182,6 @@ const init = (id?: number) => {
 
 const getAppointment_record_info = (id: number) => {
 	useAppointment_record_infoApi(id).then(res => {
-		res.data.startTime = res.data.consultTime.split('-')[0]
-		res.data.endTime = res.data.consultTime.split('-')[1]
 		Object.assign(dataForm, res.data)
 	})
 }
@@ -210,8 +212,6 @@ const submitHandle = () => {
 			return false
 		}
 		dataForm.serviceTypeName = props.serviceTypeList.find((item: any) => item.value == dataForm.serviceTypeId)?.label
-		delete dataForm.startTime
-		delete dataForm.endTime
 		useAppointment_record_infoSubmitApi(dataForm).then(() => {
 			ElMessage.success({
 				message: '操作成功',

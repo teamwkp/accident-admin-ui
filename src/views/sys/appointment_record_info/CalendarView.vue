@@ -26,7 +26,8 @@ export default defineComponent({
 			stateList,
 			getTimeTag,
 			calendarOptions: {
-				locale: zhLocale,
+				locales: [zhLocale],
+				locale: 'zh-cn',
 				plugins: [dayGridPlugin, timeGridPlugin],
 				headerToolbar: {
 					left: 'prev,next today',
@@ -38,8 +39,15 @@ export default defineComponent({
 						allDaySlot: false
 					}
 				},
+				slotLabelFormat: {
+					hour: '2-digit',
+					minute: '2-digit',
+					meridiem: false,
+					hour12: true
+				},
 				initialView: 'dayGridMonth',
 				events: this.viewData,
+				timeFormat: 'H(:mm)',
 				dayMaxEvents: true,
 				weekends: true,
 				select: this.handleDateSelect, // 点击日期格子
@@ -50,6 +58,7 @@ export default defineComponent({
 		}
 	},
 	mounted() {
+		console.log(this.viewData)
 		this.calendarApi = this.$refs.FullCalendar.getApi()
 		// this.calendarApi.gotoDate('2024-02') 跳转到某一时间点
 		this.$nextTick(() => {
@@ -103,7 +112,7 @@ export default defineComponent({
 						<el-popover placement="right" :width="400" trigger="hover">
 							<template #reference>
 								<div>
-									{{ getTimeTag(arg.event.extendedProps.consultTime) }} {{ arg.event.extendedProps.consultTime.split('-')[0] }}
+									{{ arg.event.extendedProps.consultTime.split('-')[0] }}
 									<span style="padding-left: 15px"> {{ arg.event.extendedProps.surname }}{{ arg.event.extendedProps.firstName }}</span>
 								</div>
 							</template>
@@ -157,7 +166,7 @@ export default defineComponent({
 						<ul :class="['noComplete', { complete: arg.event.extendedProps.state == 1, cancel: arg.event.extendedProps.state == 2 }]">
 							<li>{{ arg.event.extendedProps.surname }}{{ arg.event.extendedProps.firstName }}</li>
 							<li>#{{ arg.event.extendedProps.appointmentCode }}</li>
-							<li>{{ getTimeTag(arg.event.extendedProps.consultTime) }} {{ arg.event.extendedProps.consultTime }}</li>
+							<li>{{ arg.event.extendedProps.consultTime }}</li>
 							<li>{{ arg.event.extendedProps.serviceTypeName }}</li>
 							<li>{{ stateList.find(item => item.value == arg.event.extendedProps.state).label }}</li>
 						</ul>

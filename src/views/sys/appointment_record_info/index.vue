@@ -110,18 +110,37 @@ const state: IHooksOptions = reactive({
 })
 
 // 列表和日历类型
+function convertTo24HourFormat(time: any) {
+	const [hour, minute, suffix] = time.split(/:|\s/)
+	let convertedHour = parseInt(hour, 10)
+
+	if (suffix === 'PM' && convertedHour !== 12) {
+		convertedHour += 12
+	} else if (suffix === 'AM' && convertedHour === 12) {
+		convertedHour = 0
+	}
+
+	const formattedHour = convertedHour.toString().padStart(2, '0')
+	const formattedMinute = minute.toString().padStart(2, '0')
+
+	return `${formattedHour}:${formattedMinute}`
+}
 const listType = ref(1)
 watch(listType, val => {
 	if (val === 2) {
-		viewData.value = toRaw(state.dataList)?.map(item => {
+		viewData.value = toRaw(state.dataList)?.map((item: any) => {
 			const startTime = item.consultTime.split('-')[0]
-			const endTime = item.consultTime.split('-')[1]
-			const caseDate = item.caseDate.split('/').reverse().join('-')
+			const endTime = item.consultTime.indexOf(',') > -1 ? item.consultTime.split('-')[2].trim() : item.consultTime.split('-')[1].trim()
+			const date = (item.caseDate || item.consultDate).split('/')
+			const caseDate = `${date[2]}-${date[1]}-${date[0]}`
+			const consultTime =
+				item.consultTime.indexOf(',') > -1 ? item.consultTime.split('-')[0] + '-' + item.consultTime.split('-')[2] : item.consultTime
 			return {
 				...item,
 				title: item.describeInfo,
-				start: `${caseDate}T${startTime}:00`,
-				end: `${caseDate}T${endTime}:00`
+				start: `${caseDate}T${convertTo24HourFormat(startTime.replace(/(\d+:\d+)([AP]M)/g, '$1 $2'))}:00`,
+				end: `${caseDate}T${convertTo24HourFormat(endTime.replace(/(\d+:\d+)([AP]M)/g, '$1 $2'))}:00`,
+				consultTime
 			}
 		})
 	}
