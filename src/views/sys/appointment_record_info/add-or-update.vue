@@ -78,6 +78,7 @@
 import { reactive, ref, onMounted, computed, watchEffect, watch } from 'vue'
 import { ElMessage } from 'element-plus/es'
 import { useAppointment_record_infoApi, useAppointment_record_infoSubmitApi, queryAvailablePeriods } from '@/api/sys/appointment_record_info'
+import { removeStyle } from 'element-plus/es/utils'
 const emit = defineEmits(['update:modelValue', 'refreshDataList'])
 const props = defineProps({
 	modelValue: {
@@ -182,7 +183,7 @@ const init = (id?: number) => {
 
 const getAppointment_record_info = (id: number) => {
 	useAppointment_record_infoApi(id).then(res => {
-		Object.assign(dataForm, res.data)
+		Object.assign(dataForm, { ...res.data, consultTime: res.data.consultTime.split(',') })
 	})
 }
 
@@ -212,7 +213,7 @@ const submitHandle = () => {
 			return false
 		}
 		dataForm.serviceTypeName = props.serviceTypeList.find((item: any) => item.value == dataForm.serviceTypeId)?.label
-		useAppointment_record_infoSubmitApi(dataForm).then(() => {
+		useAppointment_record_infoSubmitApi({ ...dataForm, consultTime: dataForm.consultTime.join(',') }).then(() => {
 			ElMessage.success({
 				message: '操作成功',
 				duration: 500,
