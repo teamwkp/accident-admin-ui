@@ -16,6 +16,6 @@ export const useService_type_infoApi = () => {
 	return service.get('/sys/service_type_info/list')
 }
 
-export const queryAvailablePeriods = () => {
-	return service.get('/sys/appointment_record_info/queryAvailablePeriods?serviceTypeId=1&consultDate=26/1/2024')
+export const queryAvailablePeriods = (params: any) => {
+	return service.get(`/sys/appointment_record_info/queryAvailablePeriods?serviceTypeId=${params.serviceTypeId}&consultDate=${params.consultDate}`)
 }

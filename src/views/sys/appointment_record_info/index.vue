@@ -83,7 +83,7 @@
 			>
 			</el-pagination>
 		</div>
-		<calendar-view v-if="listType === 2" :view-data="viewData"></calendar-view>
+		<calendar-view v-if="listType === 2" :key="refreshKey" :view-data="viewData"></calendar-view>
 		<!-- 弹窗, 新增 / 修改 -->
 		<add-or-update v-if="visible" :id="_id" v-model="visible" :service-type-list="serviceTypeList" @refresh-data-list="getDataList"></add-or-update>
 	</el-card>
@@ -100,6 +100,7 @@ import { stateList } from './data.js'
 const viewData: any = ref([])
 const visible = ref(false)
 const _id: any = ref('')
+const refreshKey = ref(0)
 const state: IHooksOptions = reactive({
 	dataListUrl: '/sys/appointment_record_info/page',
 	deleteUrl: '/sys/appointment_record_info',
@@ -126,25 +127,41 @@ function convertTo24HourFormat(time: any) {
 	return `${formattedHour}:${formattedMinute}`
 }
 const listType = ref(1)
+const setViewData = () => {
+	viewData.value = toRaw(state.dataList)?.map((item: any) => {
+		const startTime = item.consultTime.split('-')[0]
+		const endTime = item.consultTime.indexOf(',') > -1 ? item.consultTime.split('-')[2].trim() : item.consultTime.split('-')[1].trim()
+		const date = (item.caseDate || item.consultDate).split('/')
+		const caseDate = `${date[2]}-${date[1]}-${date[0]}`
+		const consultTime = item.consultTime.indexOf(',') > -1 ? item.consultTime.split('-')[0] + '-' + item.consultTime.split('-')[2] : item.consultTime
+		return {
+			...item,
+			title: item.describeInfo,
+			start: `${caseDate}T${convertTo24HourFormat(startTime.replace(/(\d+:\d+)([AP]M)/g, '$1 $2'))}:00`,
+			end: `${caseDate}T${convertTo24HourFormat(endTime.replace(/(\d+:\d+)([AP]M)/g, '$1 $2'))}:00`,
+			consultTime
+		}
+	})
+}
+
+// 切换列表和日历时更新日历数据
 watch(listType, val => {
 	if (val === 2) {
-		viewData.value = toRaw(state.dataList)?.map((item: any) => {
-			const startTime = item.consultTime.split('-')[0]
-			const endTime = item.consultTime.indexOf(',') > -1 ? item.consultTime.split('-')[2].trim() : item.consultTime.split('-')[1].trim()
-			const date = (item.caseDate || item.consultDate).split('/')
-			const caseDate = `${date[2]}-${date[1]}-${date[0]}`
-			const consultTime =
-				item.consultTime.indexOf(',') > -1 ? item.consultTime.split('-')[0] + '-' + item.consultTime.split('-')[2] : item.consultTime
-			return {
-				...item,
-				title: item.describeInfo,
-				start: `${caseDate}T${convertTo24HourFormat(startTime.replace(/(\d+:\d+)([AP]M)/g, '$1 $2'))}:00`,
-				end: `${caseDate}T${convertTo24HourFormat(endTime.replace(/(\d+:\d+)([AP]M)/g, '$1 $2'))}:00`,
-				consultTime
-			}
-		})
+		setViewData()
 	}
 })
+
+// 表单搜索时更新日历数据
+watch(
+	() => state.dataList,
+	() => {
+		if (listType.value === 2) {
+			setViewData()
+			refreshKey.value++
+		}
+	}
+)
+
 // 获取服务类型分类
 const serviceTypeList = ref([])
 const getServiceType = async () => {

@@ -133,7 +133,7 @@ const dataForm = reactive({
 	serviceTypeId: '',
 	serviceTypeName: '',
 	caseDate: '',
-	consultTime: '',
+	consultTime: [],
 	consultDate: '',
 	describeInfo: '',
 	state: ''
@@ -143,24 +143,16 @@ const dataForm = reactive({
 })
 
 // 监听服务类型以及咨询日期变化
-watch(
-	() => dataForm.serviceTypeId,
-	async () => {
-		if (dataForm.consultDate) {
-			getConsultTime()
-		}
+watchEffect(() => {
+	if (dataForm.serviceTypeId && dataForm.consultDate) {
+		getConsultTime()
 	}
-)
-watch(
-	() => dataForm.consultDate,
-	async () => {
-		if (dataForm.serviceTypeId) {
-			getConsultTime()
-		}
-	}
-)
+})
 const getConsultTime = async () => {
-	const { data } = await queryAvailablePeriods()
+	const { data } = await queryAvailablePeriods({
+		serviceTypeId: dataForm.serviceTypeId,
+		consultDate: dataForm.consultDate
+	})
 	consultTimeList.value = data.map((item: any) => {
 		return {
 			label: item.times,
